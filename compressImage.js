@@ -1,6 +1,6 @@
 (function ($) {
     $.fn.extend({
-        "compressImg": function (option) {
+        "compressImage": function (option) {
             var _option = {
                     'file' : $(option.file),
                     'img' : $(option.img)
