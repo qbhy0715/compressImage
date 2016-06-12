@@ -12,22 +12,30 @@
     $(function (){
         $.fn.compressImg({
             file: '#fileImg',
-            img: '#img',
-            quality: function (file){
+            img: '#img',  //img标签的id
+            limit: 500, //小于500k的不进行压缩。若要所有图片都进行压缩，则该这应为0
+            quality: function (filesize){
               // 返回数字，0-100.代表图片质量
-                return file.size / 1024 /1024 > 4 ? 10 : 50;
+                return filesize > 4000 ? 10 : 50;
             },
             change: function (file){
+              console.log(file);
+
               var filesize = file.size / 1024 / 1024;
 
-              if(filesize > 4){
+              if(filesize > 400){
+
                 alert('你上传的图片太大啦,请重新选择');
-                return false;
+                return false; //返回false表示不继续执行，若要继续执行请返回true
+
               }
 
                 return true;
             },
             callback: function (data){
+
+              // 这只是测试，一般是拿到base64，然后点击提交才进行上传，并不是选择图片就上传
+              console.log(data);  //data里有用的到的数据，可以打印出来看看
                 $.ajax({
                     url: 'test.php',
                     data: {
