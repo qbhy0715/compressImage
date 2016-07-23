@@ -13,8 +13,6 @@
                 var file = $(this)[0].files[0],
                     filesize = parseFloat(file.size / 1024).toFixed(2), //单位为KB
                     fReader = new FileReader();
-
-
                 console.log("压缩前大小是" + filesize + 'KB');
 
                 if(option.change){
@@ -22,8 +20,6 @@
                         return false;
                     }
                 }
-
-
                 _option.filetype = file.type;
                 _option.filesize = filesize;
                 _option.filename = file.name;
