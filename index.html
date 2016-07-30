@@ -3,54 +3,9 @@
 <head>
     <meta charset="utf-8"/>
     <title>File API Test</title>
-    <!--<script src="jquery.min.js"></script>-->
-    <!--<script src="compressImage.js"></script>-->
     <script src="compressImages.js"></script>
 </head>
 
-<!--<script>-->
-<!--$(function (){-->
-<!--$.fn.compressImage({-->
-<!--file: '#fileImg',-->
-<!--img: '#img',  //img标签的id-->
-<!--limit: 500, //小于500k的不进行压缩。若要所有图片都进行压缩，则该这应为0-->
-<!--quality: function (filesize){-->
-<!--// 返回数字，0-100.代表图片质量-->
-<!--return filesize > 4000 ? 10 : 50;-->
-<!--},-->
-<!--change: function (file){-->
-<!--console.log(file);-->
-
-<!--var filesize = file.size / 1024;    // kb-->
-
-<!--if(filesize > 400){-->
-
-<!--alert('你上传的图片太大啦,请重新选择');-->
-<!--return false; //返回false表示不继续执行，若要继续执行请返回true-->
-
-<!--}-->
-
-<!--return true;-->
-<!--},-->
-<!--callback: function (data){-->
-
-<!--// 这只是测试，一般是拿到base64，然后点击提交才进行上传，并不是选择图片就上传-->
-<!--console.log(data);  //data里有用的到的数据，可以打印出来看看-->
-<!--$.ajax({-->
-<!--url: 'test.php',-->
-<!--data: {-->
-<!--img: data.base64,-->
-<!--filename: data.filename-->
-<!--},-->
-<!--type: 'post',-->
-<!--success: function (data){-->
-<!--console.log(data);-->
-<!--}-->
-<!--});-->
-<!--}-->
-<!--});-->
-<!--});-->
-<!--</script>-->
 
 <body>
 <input accept="image/*" type="file" id="fileImg">
@@ -59,6 +14,7 @@
 <div id="container"></div>
 
 <script>
+
     compressImages.init({
         file: 'fileImg',
         container: 'container',
