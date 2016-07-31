@@ -70,6 +70,11 @@
                 _context = _canvas.getContext('2d');
 
             if (option.limit === 0 || option.filesize >= option.limit) {
+
+
+                console.log(this.width);
+                console.log(this.height);
+
                 _canvas.width = _this.width();
                 _canvas.height = _this.height();
                 _context.drawImage(_image, 0, 0);

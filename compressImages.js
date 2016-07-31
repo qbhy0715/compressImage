@@ -11,55 +11,60 @@ var compressImages = {
             _parentElement.removeChild(_element);
         }
     },
-    container: null,
     results: [],
+    createElement: function (tag) {
+        var el = document.createElement(tag);
+        el.style.display = "none";
+        document.body.appendChild(el);
+        return el;
+    },
     count: 0,
     writeDom: function (option, imageLoad) {
 
-        var _img_hide = "_img_hide" + compressImages.results.length,
-            result = {},
-            _canvas = "_canvas" + compressImages.results.length,
+        var result = {},
             _image = new Image();
+        _image.src = option.src || "";
 
-
-        compressImages.container.innerHTML = '<canvas id="' + _canvas + '" style="display: none;"></canvas><img id="' + _img_hide + '" style="display: none;" >';
-
-
-        var _hide_img_node = compressImages.find(_img_hide);
+        var _canvas = compressImages.createElement("canvas");
+        var _hide_img_node = compressImages.createElement("img");
 
 
         result.filename = option.filename;
 
-
         _hide_img_node.src = option.src;
 
         _hide_img_node.onload = function () {
-            var _hide_canvas_node = compressImages.find(_canvas),
-                _context = _hide_canvas_node.getContext('2d');
+            var _context = _canvas.getContext('2d');
             if (option.limit === 0 || option.filesize >= option.limit) {
-                _hide_canvas_node.width = this.offsetWidth;
-                _hide_canvas_node.height = this.offsetHeight;
-                _context.drawImage(_image, 0, 0);
+
+                _canvas.width = this.width * (compressImages.zoom({width: this.width}) / 100);
+                _canvas.height = this.height * (compressImages.zoom({height: this.height}) / 100);
+
+                _context.drawImage(_image, 0, 0, _canvas.width, _canvas.height);
                 option.base64 = _canvas.toDataURL(option.format, option.quality / 100);
+                // option.base64 = _canvas.toDataURL(option.format, 1);
             } else {
                 option.base64 = option.src;
             }
 
 
             result.base64 = option.base64;
+            result.source = option.src;
+
             compressImages.results.push(result);
 
+            compressImages.remove(_canvas);
+            compressImages.remove(_hide_img_node);
 
             var tempImage = document.createElement("img");
             tempImage.setAttribute('src', option.base64);
             tempImage.setAttribute('class', compressImages.className);
             compressImages.imageContainer.appendChild(tempImage);
+
             option.imageNode = tempImage;
             imageLoad(option);
 
-
             if (compressImages.results.length == compressImages.count) {
-                compressImages.remove(compressImages.container);
                 compressImages.callback(compressImages.results);
             }
 
@@ -119,6 +124,10 @@ var compressImages = {
         //设置为仅选取图片
         obj.fileNode.setAttribute('accept', 'image/*');
 
+        compressImages.zoom = options.zoom || function () {
+                return 100;
+            };
+
 
         //用来展示文件的容器
         compressImages.imageContainer = compressImages.find(options.container);
@@ -144,9 +153,6 @@ var compressImages = {
         //绑定事件
         obj.fileNode.addEventListener('change', function () {
 
-            compressImages.container = document.createElement("div");
-            compressImages.container.style.display = "none";
-            document.body.appendChild(compressImages.container);
             var files = this.files;
             compressImages.count = files.length;
 

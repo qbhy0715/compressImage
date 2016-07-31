@@ -10,7 +10,14 @@
 <body>
 <input accept="image/*" type="file" id="fileImg">
 <img src="" alt="" id="img">
-
+<style>
+    .imageload {
+        width: 100px;
+        height: 100px;
+        float: left;
+        margin: 10px;
+    }
+</style>
 <div id="container"></div>
 
 <script>
@@ -22,12 +29,26 @@
             console.log("全部文件结束.拿到如下数据");
             console.log(data);
         },
-        className: "",
+        className: "imageload",
+        quality: function (filesize) {
+            return filesize > 1024 ? 10 : 50;
+        },
+        zoom: function (obj) {      //自定义比例缩放。
+            if (obj.width) {
+                return obj.width > 200 ? 40 : 80;
+            }
+            else if (obj.height) {
+                return 50;
+            }
+        },
+        limit: 10,
         imageLoad: function (data) {
             console.log("单个文件结束.拿到如下数据");
             console.log(data);
         }
     });
+
+
 </script>
 
 </body>

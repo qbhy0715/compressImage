@@ -13,7 +13,7 @@
         $.fn.compressImage({
             file: '#fileImg',
             img: '#img',  //img标签的id
-            limit: 500, //小于500k的不进行压缩。若要所有图片都进行压缩，则该这应为0
+            limit: 10, //小于500k的不进行压缩。若要所有图片都进行压缩，则该这应为0
             quality: function (filesize) {
 // 返回数字，0-100.代表图片质量
                 return filesize > 4000 ? 10 : 50;
