@@ -8,43 +8,92 @@
 
 
 <body>
-<input accept="image/*" type="file" id="fileImg">
-<img src="" alt="" id="img">
+
+<div class="ci-file">
+    <label for="fileImg">选择图片</label>
+    <input type="file" id="fileImg">
+</div>
+
 <style>
+    body {
+        padding-top: 50px;
+    }
+
     .imageload {
         width: 100px;
         height: 100px;
         float: left;
         margin: 10px;
+        position: relative;
     }
+
+    .ci-file {
+        position: fixed;
+        overflow: hidden;
+        top: 10px;
+        left: 10px;
+        width: 6em;
+        text-align: center;
+        height: 30px;
+        line-height: 30px;
+        border-radius: 5px;
+        border: none;
+        background: #66CCCC;
+        color: #fff;
+    }
+
+    .ci-file:hover {
+        background: #0099CC;
+    }
+
+    .ci-file input {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        z-index: 10;
+        margin-top: -30px;
+    }
+
 </style>
 <div id="container"></div>
 
 <script>
 
     compressImages.init({
-        file: 'fileImg',
-        container: 'container',
-        callback: function (data) {
+        file: document.getElementById("fileImg"),
+        container: document.getElementById('container'),
+        callback: function (data) {             //所有图片操作完成后执行。拿到压缩过后的和原图的base64值和filename
             console.log("全部文件结束.拿到如下数据");
             console.log(data);
         },
-        className: "imageload",
-        quality: function (filesize) {
+        className: "imageload",             //每个图片的class值，用于自定义样式
+        quality: function (filesize) {      //自定义质量
             return filesize > 1024 ? 10 : 50;
         },
         zoom: function (obj) {      //自定义比例缩放。
             if (obj.width) {
-                return obj.width > 200 ? 40 : 80;
+                return obj.width > 200 ? 40 : 80;   //可计算的宽
             }
             else if (obj.height) {
-                return 50;
+                return 50;      //此处高为原图的 50%
             }
         },
-        limit: 10,
-        imageLoad: function (data) {
+        limit: -1,              //-1代表全部不压缩，0代表全部压缩。数字，例如500代表大于500k进行压缩。
+        maxFiles: {             //最多的文件个数，如果所选文件大于number。则中断操作并执行onoverflow函数，参数为fils文件集合。
+            number: 9,
+            onoverflow: function (files) {
+                alert("图片太多了。");
+                console.log(files);
+            }
+        },
+        imageLoad: function (data) {        //单个图片压缩完成。
             console.log("单个文件结束.拿到如下数据");
             console.log(data);
+            return false;
+
         }
     });
 

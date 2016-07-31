@@ -1,6 +1,6 @@
 var compressImages = {
     find: function (selector) {
-        return document.getElementById(selector);
+        return document.querySelector(selector);
     },
     remove: function removeElement(_element) {
         if (!_element) {
@@ -35,14 +35,26 @@ var compressImages = {
 
         _hide_img_node.onload = function () {
             var _context = _canvas.getContext('2d');
-            if (option.limit === 0 || option.filesize >= option.limit) {
 
-                _canvas.width = this.width * (compressImages.zoom({width: this.width}) / 100);
-                _canvas.height = this.height * (compressImages.zoom({height: this.height}) / 100);
+            var _width = this.width,
+                _height = this.height;
+
+            option.width = _width;
+            option.height = _height;
+
+
+            if (option.limit < 0) {
+                option.base64 = option.src;
+            }
+            else if (option.limit === true || option.filesize >= option.limit) {
+
+                _canvas.width = _width * (compressImages.zoom({width: _width}) / 100);
+                _canvas.height = _height * (compressImages.zoom({height: _height}) / 100);
 
                 _context.drawImage(_image, 0, 0, _canvas.width, _canvas.height);
                 option.base64 = _canvas.toDataURL(option.format, option.quality / 100);
                 // option.base64 = _canvas.toDataURL(option.format, 1);
+                console.log("执行压缩");
             } else {
                 option.base64 = option.src;
             }
@@ -62,6 +74,7 @@ var compressImages = {
             compressImages.imageContainer.appendChild(tempImage);
 
             option.imageNode = tempImage;
+
             imageLoad(option);
 
             if (compressImages.results.length == compressImages.count) {
@@ -116,7 +129,7 @@ var compressImages = {
         var obj = {};
 
         //input标签
-        obj.fileNode = this.find(options.file);
+        obj.fileNode = typeof (options.file) == 'object' ? options.file : this.find(options.file);
 
         //设置为允许选取多文件
         obj.fileNode.setAttribute('multiple', 'multiple');
@@ -124,17 +137,16 @@ var compressImages = {
         //设置为仅选取图片
         obj.fileNode.setAttribute('accept', 'image/*');
 
+        //模板不进行缩放
         compressImages.zoom = options.zoom || function () {
                 return 100;
             };
 
-
         //用来展示文件的容器
-        compressImages.imageContainer = compressImages.find(options.container);
-
+        compressImages.imageContainer = typeof (options.container) == 'object' ? options.container : compressImages.find(options.container);
 
         //执行压缩的最小文件大小。
-        obj.limit = options.limit || 4000;
+        obj.limit = options.limit || true;
 
         //注册回调函数。
         compressImages.callback = options.callback;
@@ -144,6 +156,7 @@ var compressImages = {
 
         //回调函数
         obj.imageLoad = options.imageLoad || function () {
+                return true;
             };
 
         //回调函数
@@ -155,6 +168,13 @@ var compressImages = {
 
             var files = this.files;
             compressImages.count = files.length;
+
+            if (options.maxFiles) {
+                if (compressImages.count > options.maxFiles.number) {
+                    options.maxFiles.onoverflow(files);
+                    return false;
+                }
+            }
 
             for (var i = 0; i < this.files.length; i++) {
                 compressImages.transform(files[i], obj.limit, options.quality || false, obj.imageLoad);
