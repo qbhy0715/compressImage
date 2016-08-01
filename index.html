@@ -62,7 +62,7 @@
 
 <script>
 
-    compressImages.init({
+    new ci({
         file: document.getElementById("fileImg"),
         container: document.getElementById('container'),
         callback: function (data) {             //所有图片操作完成后执行。拿到压缩过后的和原图的base64值和filename
@@ -89,13 +89,13 @@
                 console.log(files);
             }
         },
-        imageLoad: function (data) {        //单个图片压缩完成。
+        imageWillMount: function (data) {        //单个图片压缩完成。
             console.log("单个文件结束.拿到如下数据");
             console.log(data);
-            return false;
-
+            return true;
         }
     });
+
 
 
 </script>

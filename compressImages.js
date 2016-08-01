@@ -1,108 +1,135 @@
-var compressImages = {
-    find: function (selector) {
-        return document.querySelector(selector);
-    },
-    remove: function removeElement(_element) {
-        if (!_element) {
-            return false;
-        }
-        var _parentElement = _element.parentNode;
-        if (_parentElement) {
-            _parentElement.removeChild(_element);
-        }
-    },
-    results: [],
-    createElement: function (tag) {
-        var el = document.createElement(tag);
-        el.style.display = "none";
-        document.body.appendChild(el);
-        return el;
-    },
-    count: 0,
-    writeDom: function (option, imageLoad) {
 
-        var result = {},
-            _image = new Image();
-        _image.src = option.src || "";
+function ci(options) {
+    //input标签
+    this.fileNode = this.f(options.file);
 
-        var _canvas = compressImages.createElement("canvas");
-        var _hide_img_node = compressImages.createElement("img");
-
-
-        result.filename = option.filename;
-
-        _hide_img_node.src = option.src;
-
-        _hide_img_node.onload = function () {
-            var _context = _canvas.getContext('2d');
-
-            var _width = this.width,
-                _height = this.height;
-
-            option.width = _width;
-            option.height = _height;
-
-
-            if (option.limit < 0) {
-                option.base64 = option.src;
-            }
-            else if (option.limit === true || option.filesize >= option.limit) {
-
-                _canvas.width = _width * (compressImages.zoom({width: _width}) / 100);
-                _canvas.height = _height * (compressImages.zoom({height: _height}) / 100);
-
-                _context.drawImage(_image, 0, 0, _canvas.width, _canvas.height);
-                option.base64 = _canvas.toDataURL(option.format, option.quality / 100);
-                // option.base64 = _canvas.toDataURL(option.format, 1);
-                console.log("执行压缩");
-            } else {
-                option.base64 = option.src;
-            }
-
-
-            result.base64 = option.base64;
-            result.source = option.src;
-
-            compressImages.results.push(result);
-
-            compressImages.remove(_canvas);
-            compressImages.remove(_hide_img_node);
-
-            var tempImage = document.createElement("img");
-            tempImage.setAttribute('src', option.base64);
-            tempImage.setAttribute('class', compressImages.className);
-            compressImages.imageContainer.appendChild(tempImage);
-
-            option.imageNode = tempImage;
-
-            imageLoad(option);
-
-            if (compressImages.results.length == compressImages.count) {
-                compressImages.callback(compressImages.results);
-            }
-
+    //默认不进行缩放
+    this.zoom = options.zoom || function () {
+            return 100;
         };
+
+    //用来展示文件的容器
+    this.imageContainer = this.f(options.container);
+
+    //执行压缩的最小文件大小。
+    this.limit = options.limit || true;
+
+
+    //注册全部文件执行完后的回调函数。
+    this.callback = options.callback;
+
+    //自定义质量
+    this.quality = options.quality || false;
+
+
+    //图片的class
+    this.className = options.className || '';
+
+
+    //图片插入之前执行的函数
+    this.imageWillMount = options.imageWillMount || function () {
+            return true;
+        };
+
+    //压缩过后的图片集合
+    this.results = [];
+
+    this.count = 0;
+
+    //图片插入之后执行的函数
+    this.imageDidMount = options.imageDidMount || function () {
+            return true;
+        };
+
+    //默认为不缩放
+    this.zoom = options.zoom || function (obj) {
+            if (obj.width) {
+                return obj.width;
+            } else if (obj.height) {
+                return obj.height;
+            }
+        };
+
+    //文件数超出
+    this.maxFiles = options.maxFiles || false;
+
+    this.fileWillStart = options.fileWillStart || false;
+
+    this.constructor();
+}
+
+ci.prototype = {
+    constructor: function (obj) {
+
+        var self = this;
+        //设置为允许选取多文件
+        this.fileNode.setAttribute('multiple', 'multiple');
+
+        //设置为仅选取图片
+        this.fileNode.setAttribute('accept', 'image/*');
+
+
+        this.fileNode.addEventListener('change', function () {
+            var files = this.files;
+            self.count = files.length;
+
+            if (self.maxFiles) {
+                if (files.length > self.maxFiles.number) {
+                    self.maxFiles.onoverflow(files);
+                    return false;
+                }
+            }
+
+
+            for (var i = 0; i < this.files.length; i++) {
+
+                if (self.fileWillStart) {
+                    if (!self.fileWillStart(files)) {
+                        self.count--;
+                        return false;
+                    }
+                }
+                self.start(files[i]);
+            }
+
+        });
+
+
     },
-    transform: function (file, limit, quality, imageLoad) {
+    f: function (s) {
+        return typeof s == 'object' ? s : document.querySelector(s);
+    },
+    writeDOM: function (option) {
+        var tempImage = document.createElement("img");
+        tempImage.setAttribute('src', option.base64);
+        tempImage.setAttribute('class', this.className);
+        this.imageContainer.appendChild(tempImage);
+        option.imageNode = tempImage;
+        this.imageDidMount(option);
+    },
+    start: function (file) {
+
         var filesize = parseFloat(file.size / 1024).toFixed(2),  //单位为KB
             fReader = new FileReader(),
-            _option = {};
-        _option.format = file.type;
+            _option = {
+                format: file.type
+            },
+            self = this;
 
+        //载入文件
         fReader.readAsDataURL(file);
         fReader.onload = function (e) {
 
-            //原图的base64值
-            _option.src = this.result;
-            _option.limit = limit;
-            _option.filesize = filesize;
-            _option.filename = file.name;
+
+            _option.src = this.result;              //原图的base64值
+            _option.filesize = filesize;            //文件大小。单位为K
+            _option.filename = file.name;           //文件名
 
 
             // 如果有定义压缩比率
-            if (quality) {
+            if (self.quality) {
                 //执行自定义质量函数。传过去当前文件大小
-                _option.quality = quality(filesize);
+                _option.quality = self.quality(filesize);
             } else {
                 //默认压缩率,0~100
                 if (filesize / 1024 > 4) {
@@ -118,69 +145,90 @@ var compressImages = {
                 }
             }
 
-            compressImages.writeDom(_option, imageLoad);
+            self.transform(_option);
 
 
         }
 
 
     },
-    init: function (options) {
-        var obj = {};
+    transform: function (option) {
 
-        //input标签
-        obj.fileNode = typeof (options.file) == 'object' ? options.file : this.find(options.file);
+        var result = {},
+            self = this,
+            _hide_img_node = self.createElement("img"),
+            _image = new Image();
 
-        //设置为允许选取多文件
-        obj.fileNode.setAttribute('multiple', 'multiple');
+        //用于画布
+        _image.src = option.src || "";
 
-        //设置为仅选取图片
-        obj.fileNode.setAttribute('accept', 'image/*');
 
-        //模板不进行缩放
-        compressImages.zoom = options.zoom || function () {
-                return 100;
-            };
+        result.filename = option.filename;
 
-        //用来展示文件的容器
-        compressImages.imageContainer = typeof (options.container) == 'object' ? options.container : compressImages.find(options.container);
 
-        //执行压缩的最小文件大小。
-        obj.limit = options.limit || true;
+        _hide_img_node.src = option.src;
+        _hide_img_node.onload = function () {
 
-        //注册回调函数。
-        compressImages.callback = options.callback;
+            var _width = this.width,
+                _height = this.height;
 
-        //图片的class
-        compressImages.className = options.className || '';
 
-        //回调函数
-        obj.imageLoad = options.imageLoad || function () {
-                return true;
-            };
+            option.width = _width;
+            option.height = _height;
 
-        //回调函数
-        obj.callback = options.callback || function () {
-            };
-
-        //绑定事件
-        obj.fileNode.addEventListener('change', function () {
-
-            var files = this.files;
-            compressImages.count = files.length;
-
-            if (options.maxFiles) {
-                if (compressImages.count > options.maxFiles.number) {
-                    options.maxFiles.onoverflow(files);
-                    return false;
-                }
+            if (option.limit < 0) {
+                option.base64 = option.src;
             }
-
-            for (var i = 0; i < this.files.length; i++) {
-                compressImages.transform(files[i], obj.limit, options.quality || false, obj.imageLoad);
+            else if (option.limit === true || option.filesize >= option.limit) {
+                var _canvas = self.createElement("canvas"),
+                    _context = _canvas.getContext('2d');
+                _canvas.width = self.zoom({width: _width});
+                _canvas.height = self.zoom({height: _height});
+                _context.drawImage(_image, 0, 0, _canvas.width, _canvas.height);
+                option.base64 = _canvas.toDataURL(option.format, option.quality / 100); //这里的quality是计算过后的质量，并非self.quality方法
+                self.remove(_canvas);
+                self.remove(_hide_img_node);
+            } else {
+                option.base64 = option.src;
             }
 
 
-        });
+            result.base64 = option.base64;
+            result.filesize = option.filesize;
+            result.source = option.src;
+
+            self.results.push(result);
+
+
+            if (self.imageWillMount(option)) {
+                self.writeDOM(option);
+            }
+
+
+            if (self.results.length == self.count) {
+                self.callback(self.results);
+                self.results = [];
+            }
+
+        };
+    }
+
+    ,
+    remove: function (_element) {
+        if (!_element) {
+            return false;
+        }
+        var _parentElement = _element.parentNode;
+        if (_parentElement) {
+            _parentElement.removeChild(_element);
+        }
+    }
+    ,
+    createElement: function (tag) {
+        var el = document.createElement(tag);
+        el.style.display = "none";
+        document.body.appendChild(el);
+        return el;
     }
 };
+
